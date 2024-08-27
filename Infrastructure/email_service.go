@@ -25,13 +25,17 @@ func NewEmailService(smtpHost, smtpPort, smtpUser, smtpPass string) *EmailServic
 
 // SendEmail sends an email with the given recipient, subject, and body
 func (e *EmailService) SendEmail(to, subject, body string) error {
-    from := "no-reply@loan-tracker.com" // Sender email address
+    from := "no-reply@loan-tracker.com"
     msg := []byte("To: " + to + "\r\n" +
         "Subject: " + subject + "\r\n" +
-        "\r\n" + body + "\r\n") // Email message format
+        "\r\n" + body + "\r\n")
 
-    addr := fmt.Sprintf("%s:%s", e.smtpHost, e.smtpPort) // SMTP server address
-    return smtp.SendMail(addr, e.auth, from, []string{to}, msg) // Send the email
+    addr := fmt.Sprintf("%s:%s", e.smtpHost, e.smtpPort)
+    err := smtp.SendMail(addr, e.auth, from, []string{to}, msg)
+    if err != nil {
+        fmt.Printf("SMTP error: %v\n", err)
+    }
+    return err
 }
 
 // SendPasswordResetEmail sends a password reset email to the user
@@ -46,5 +50,9 @@ func (e *EmailService) SendVerificationEmail(to string) error {
     subject := "Email Verification"
     body := "Please click the link below to verify your email address:\n\n" +
         "http://example.com/verify-email?email=" + to
-    return e.SendEmail(to, subject, body)
+    err := e.SendEmail(to, subject, body)
+    if err != nil {
+        fmt.Printf("Failed to send verification email: %v\n", err)
+    }
+    return err
 }

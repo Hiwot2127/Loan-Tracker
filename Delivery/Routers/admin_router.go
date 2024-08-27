@@ -7,7 +7,7 @@ import (
     "github.com/gin-gonic/gin"
 )
 
-func SetAdminRoutes(router *gin.Engine, adminController *Controllers.AdminController, adminMiddleware gin.HandlerFunc, tokenService *Infrastructure.TokenService) {
+func SetAdminRoutes(router *gin.RouterGroup, adminController *Controllers.AdminController, adminMiddleware gin.HandlerFunc, tokenService *Infrastructure.TokenService) {
     adminRoutes := router.Group("/admin")
     adminRoutes.Use(Middleware.GinAuthMiddleware(tokenService))
     adminRoutes.Use(adminMiddleware)

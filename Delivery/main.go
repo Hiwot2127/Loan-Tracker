@@ -27,6 +27,11 @@ func main() {
     // Initialize the database connection
     dbURI := os.Getenv("DB_URI")
     dbName := os.Getenv("DB_NAME")
+    // Validate environment variables
+    if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" || dbURI == "" || dbName == "" {
+        log.Fatalf("Missing required environment variables")
+    }
+
     db, err := Infrastructure.NewDatabase(dbURI, dbName)
     if err != nil {
         log.Fatalf("Could not connect to the database: %v", err)
@@ -45,9 +50,16 @@ func main() {
     adminMiddleware := Middleware.AdminMiddleware(userUsecase)
 
     router := gin.Default()
-    router.Use(Middleware.GinAuthMiddleware(tokenService))
+    // Set up user routes
     Routers.SetUserRoutes(router, userController, tokenService)
-    Routers.SetAdminRoutes(router, adminController, adminMiddleware, tokenService)
 
-    router.Run(":8080")
+    // Set up admin routes with middleware
+    authRoutes := router.Group("/auth")
+    authRoutes.Use(Middleware.GinAuthMiddleware(tokenService))
+    Routers.SetAdminRoutes(authRoutes, adminController, adminMiddleware, tokenService)
+
+    // Start the server
+    if err := router.Run(":8080"); err != nil {
+        log.Fatalf("Failed to run server: %v", err)
+    }
 }
