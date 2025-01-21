@@ -39,24 +39,26 @@ func main() {
     defer db.Close()
 
     userRepository := Repositories.NewUserRepository(db.Database)
+    loanRepository := Repositories.NewLoanRepository(db.Database)
     emailService := Infrastructure.NewEmailService(smtpHost, smtpPort, smtpUser, smtpPass)
     tokenService := Infrastructure.NewTokenService()
 
     userUsecase := Usecases.NewUserUsecase(userRepository, tokenService, emailService)
+    loanUsecase := Usecases.NewLoanUsecase(loanRepository)
     userController := Controllers.NewUserController(userUsecase, emailService, tokenService)
+    loanController := Controllers.NewLoanController(loanUsecase)
 
     adminUsecase := Usecases.NewAdminUsecase(userRepository)
     adminController := Controllers.NewAdminController(adminUsecase)
     adminMiddleware := Middleware.AdminMiddleware(userUsecase)
-
     router := gin.Default()
     // Set up user routes
-    Routers.SetUserRoutes(router, userController, tokenService)
+    Routers.SetUserRoutes(router, userController, loanController, tokenService)
 
     // Set up admin routes with middleware
     authRoutes := router.Group("/auth")
     authRoutes.Use(Middleware.GinAuthMiddleware(tokenService))
-    Routers.SetAdminRoutes(authRoutes, adminController, adminMiddleware, tokenService)
+    Routers.SetAdminRoutes(authRoutes, adminController, loanController, adminMiddleware, tokenService)
 
     // Start the server
     if err := router.Run(":8080"); err != nil {

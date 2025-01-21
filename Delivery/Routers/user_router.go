@@ -7,13 +7,14 @@ import (
     "github.com/gin-gonic/gin"
 )
 
-func SetUserRoutes(router *gin.Engine, userController *Controllers.UserController, tokenService *Infrastructure.TokenService) {
+func SetUserRoutes(router *gin.Engine, userController *Controllers.UserController, loanController *Controllers.LoanController, tokenService *Infrastructure.TokenService) {
     userRoutes := router.Group("/users")
     {
         userRoutes.POST("/register", userController.RegisterUser)
-        userRoutes.POST("/login", userController.LoginUser) 
+        userRoutes.POST("/login", userController.LoginUser)
     }
-  // Apply middleware only to routes that require authentication
+
+    // Apply middleware only to routes that require authentication
     authRoutes := userRoutes.Group("/auth")
     authRoutes.Use(Middleware.GinAuthMiddleware(tokenService))
     {
@@ -22,5 +23,9 @@ func SetUserRoutes(router *gin.Engine, userController *Controllers.UserControlle
         authRoutes.GET("/profile/:id", userController.GetUserProfile)
         authRoutes.POST("/password-reset", userController.PasswordResetRequest)
         authRoutes.POST("/password-update", userController.PasswordUpdateAfterReset)
+
+        // Loan routes
+        authRoutes.POST("/loans", loanController.ApplyForLoan)
+        authRoutes.GET("/loans/:id", loanController.GetLoanStatus)
     }
-    }
+}
